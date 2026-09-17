@@ -23,7 +23,7 @@
 
         #chat {
             max-width: 800px;
-            margin: 20px auto;
+            margin: 20px auto 90px;
             padding: 10px;
         }
 
@@ -32,6 +32,7 @@
             margin: 10px 0;
             border-radius: 10px;
             line-height: 1.5;
+            white-space: pre-wrap;
         }
 
         .user {
@@ -77,11 +78,11 @@
 
 <body>
 
-<header>My AI</header>
+<header>My AI 🤖</header>
 
 <div id="chat">
     <div class="message ai">
-        Hello! 👋 I am your AI assistant. Ask me anything.
+        Hello! 👋 I am your AI assistant.
     </div>
 </div>
 
@@ -91,11 +92,11 @@
 </div>
 
 <script>
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById("question");
     const question = input.value.trim();
 
-    if (question === "") return;
+    if (!question) return;
 
     const chat = document.getElementById("chat");
 
@@ -104,12 +105,37 @@ function sendMessage() {
     userMessage.textContent = question;
     chat.appendChild(userMessage);
 
+    input.value = "";
+
     const aiMessage = document.createElement("div");
     aiMessage.className = "message ai";
-    aiMessage.textContent = "I received your message: " + question;
+    aiMessage.textContent = "Thinking...";
     chat.appendChild(aiMessage);
 
-    input.value = "";
+    try {
+        const response = await fetch("http://localhost:11434/api/generate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama3.2",
+                prompt: question,
+                stream: false
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("AI server error");
+        }
+
+        const data = await response.json();
+        aiMessage.textContent = data.response;
+
+    } catch (error) {
+        aiMessage.textContent =
+            "I couldn't connect to Ollama. Make sure Ollama is running on your laptop.";
+    }
 }
 </script>
 
